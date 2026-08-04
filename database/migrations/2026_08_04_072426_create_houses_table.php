@@ -6,20 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('houses', function (Blueprint $table) {
             $table->id();
+
+            $table->string('house_number', 20)->unique();
+            $table->string('block', 10)->nullable();
+
+            $table->enum('status', [
+                'occupied',
+                'vacant'
+            ])->default('vacant');
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('houses');
