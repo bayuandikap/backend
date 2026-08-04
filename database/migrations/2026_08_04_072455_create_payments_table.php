@@ -11,15 +11,35 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payment_types', function (Blueprint $table) {
-
+        Schema::create('payments', function (Blueprint $table) {
             $table->id();
 
-            $table->string('name');
+            $table->foreignId('house_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-            $table->decimal('default_amount', 12, 2);
+            $table->foreignId('payment_type_id')
+                ->constrained();
+
+            $table->unsignedTinyInteger('month');
+            $table->unsignedSmallInteger('year');
+
+            $table->decimal('amount', 12, 2);
+
+            $table->date('paid_at')->nullable();
+
+            $table->enum('status', ['paid', 'unpaid'])
+                ->default('unpaid');
+
+            $table->text('notes')->nullable();
 
             $table->timestamps();
+
+            // Composite unique index
+            $table->unique(
+                ['house_id', 'payment_type_id', 'month', 'year'],
+                'payments_unique_monthly'
+            );
         });
     }
 
@@ -29,5 +49,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('payments');
+
+        Schema::table('payments', function (Blueprint $table) {
+            $table->dropUnique('payments_unique_monthly');
+        });
     }
 };
