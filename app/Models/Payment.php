@@ -15,4 +15,9 @@ class Payment extends Model
     {
         return $this->belongsTo(PaymentType::class);
     }
+
+    public function houseResident()
+    {
+        return $this->belongsTo(HouseResident::class);
+    }
 }

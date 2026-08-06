@@ -15,4 +15,8 @@ class HouseResident extends Model
     {
         return $this->belongsTo(Resident::class);
     }
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

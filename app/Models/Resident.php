@@ -10,4 +10,9 @@ class Resident extends Model
     {
         return $this->hasMany(HouseResident::class);
     }
+
+    public function houseResidents()
+    {
+        return $this->hasMany(HouseResident::class);
+    }
 }
