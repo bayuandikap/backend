@@ -3,98 +3,105 @@
 namespace Database\Seeders;
 
 use App\Models\Payment;
+use App\Models\PaymentType;
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class PaymentSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        Payment::insert([
+        Payment::query()->delete();
 
-            // House A-01
-            [
-                'house_id' => 1,
-                'payment_type_id' => 1,
-                'month' => 7,
-                'year' => 2026,
-                'amount' => 100000,
-                'paid_at' => '2026-07-05',
-                'status' => 'paid',
-                'notes' => 'Paid on time',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        $year = Carbon::now()->year;
 
-            [
-                'house_id' => 1,
-                'payment_type_id' => 1,
-                'month' => 8,
-                'year' => 2026,
-                'amount' => 100000,
-                'paid_at' => null,
-                'status' => 'unpaid',
-                'notes' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        $paymentTypes = PaymentType::all();
 
-            // House A-02
-            [
-                'house_id' => 2,
-                'payment_type_id' => 1,
-                'month' => 8,
-                'year' => 2026,
-                'amount' => 100000,
-                'paid_at' => '2026-08-02',
-                'status' => 'paid',
-                'notes' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        /*
+         House 1
+         Membayar semua tagihan selama 12 bulan
+        */
 
-            // House A-03
-            [
-                'house_id' => 3,
-                'payment_type_id' => 2,
-                'month' => 8,
-                'year' => 2026,
-                'amount' => 50000,
-                'paid_at' => '2026-08-03',
-                'status' => 'paid',
-                'notes' => 'Garbage fee',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        foreach ($paymentTypes as $type) {
 
-            [
-                'house_id' => 4,
-                'payment_type_id' => 2,
-                'month' => 8,
-                'year' => 2026,
-                'amount' => 50000,
-                'paid_at' => null,
-                'status' => 'unpaid',
-                'notes' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            for ($month = 1; $month <= 12; $month++) {
 
-            [
-                'house_id' => 5,
-                'payment_type_id' => 3,
-                'month' => 8,
-                'year' => 2026,
-                'amount' => 75000,
-                'paid_at' => '2026-08-01',
-                'status' => 'paid',
-                'notes' => 'Community contribution',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+                Payment::create([
 
-        ]);
+                    'house_id' => 1,
+
+                    'payment_type_id' => $type->id,
+
+                    'month' => $month,
+
+                    'year' => $year,
+
+                    'amount' => $type->default_amount,
+
+                    'paid_at' => Carbon::create($year, $month, rand(1, 10)),
+
+                    'status' => 'paid',
+
+                    'notes' => 'Pembayaran tahunan',
+
+                ]);
+
+            }
+
+        }
+
+        /*
+         House 2-19
+         Pembayaran bulanan
+        */
+
+        for ($house = 2; $house <= 19; $house++) {
+
+            foreach ($paymentTypes as $type) {
+
+                for ($month = 1; $month <= 12; $month++) {
+
+                    /*
+                     Sekitar 20% unpaid
+                    */
+
+                    $paid = rand(1, 100) > 20;
+
+                    Payment::create([
+
+                        'house_id' => $house,
+
+                        'payment_type_id' => $type->id,
+
+                        'month' => $month,
+
+                        'year' => $year,
+
+                        'amount' => $type->default_amount,
+
+                        'paid_at' => $paid
+                            ? Carbon::create($year, $month, rand(1, 28))
+                            : null,
+
+                        'status' => $paid
+                            ? 'paid'
+                            : 'unpaid',
+
+                        'notes' => $paid
+                            ? 'Pembayaran bulanan'
+                            : 'Belum dibayar',
+
+                    ]);
+
+                }
+
+            }
+
+        }
+
+        /*
+         House 20 kosong
+         Tidak memiliki pembayaran
+        */
     }
 }

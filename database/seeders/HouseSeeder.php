@@ -2,31 +2,73 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\House;
 
 class HouseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        House::query()->delete();
+
         $houses = [];
 
-        foreach (['A', 'B'] as $block) {
-            for ($i = 1; $i <= 10; $i++) {
-                $houses[] = [
-                    'house_number' => sprintf('%s-%02d', $block, $i),
-                    'block' => $block,
-                    'status' => $i <= 8 ? 'occupied' : 'vacant',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
+        // Block A
+        for ($i = 1; $i <= 5; $i++) {
+
+            $houses[] = [
+                'house_number' => 'A-' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                'block' => 'A',
+                'status' => 'occupied',
+            ];
         }
 
-        House::insert($houses);
+        // Block B
+        for ($i = 1; $i <= 5; $i++) {
+
+            $houses[] = [
+                'house_number' => 'B-' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                'block' => 'B',
+                'status' => 'occupied',
+            ];
+        }
+
+        // Block C
+        for ($i = 1; $i <= 5; $i++) {
+
+            $houses[] = [
+                'house_number' => 'C-' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                'block' => 'C',
+                'status' => 'occupied',
+            ];
+        }
+
+        // Block D
+        for ($i = 1; $i <= 5; $i++) {
+
+            $houses[] = [
+                'house_number' => 'D-' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                'block' => 'D',
+                'status' => 'occupied',
+            ];
+        }
+
+        /*
+        20 Houses
+
+        15 Permanent
+        4 Contract
+        1 Vacant
+
+        D-05 dibuat kosong
+        */
+
+        $houses[19]['status'] = 'vacant';
+
+        foreach ($houses as $house) {
+
+            House::create($house);
+
+        }
     }
 }
