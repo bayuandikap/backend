@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class ResidentResource extends JsonResource
 {
@@ -21,7 +22,9 @@ class ResidentResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
             'birth_date' => $this->birth_date,
-            'ktp_photo' => $this->ktp_photo,
+            'ktp_photo' => $this->ktp_photo
+                ? asset(Storage::url($this->ktp_photo))
+                : null,
             'resident_status' => $this->resident_status,
             'is_married' => $this->is_married,
         ];

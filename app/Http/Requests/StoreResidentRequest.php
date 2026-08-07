@@ -50,9 +50,21 @@ class StoreResidentRequest extends FormRequest
                 'date'
             ],
 
+            'address' => [
+                'nullable',
+                'max:255'
+            ],
+
+            'occupation' => [
+                'nullable',
+                'max:255'
+            ],
+
             'ktp_photo' => [
                 'nullable',
-                'string'
+                'image',
+                'mimes:jpg,jpeg,png',
+                'max:2048',
             ],
 
             'resident_status' => [

@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateResidentRequest;
 use App\Http\Resources\ResidentResource;
 use App\Models\Resident;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ResidentController extends Controller
 {
@@ -23,6 +24,10 @@ class ResidentController extends Controller
             $q->where('gender', $gender);
         });
 
+        $query->when($request->resident_status, function ($q, $status) {
+            $q->where('resident_status', $status);
+        });
+
         $residents = Resident::latest()->paginate(10);
 
         return ResidentResource::collection($residents);
@@ -30,7 +35,15 @@ class ResidentController extends Controller
 
     public function store(StoreResidentRequest $request)
     {
-        $resident = Resident::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('ktp_photo')) {
+            $data['ktp_photo'] = $request
+                ->file('ktp_photo')
+                ->store('ktp', 'public');
+        }
+
+        $resident = Resident::create($data);
 
         return new ResidentResource($resident);
     }
@@ -42,7 +55,20 @@ class ResidentController extends Controller
 
     public function update(UpdateResidentRequest $request, Resident $resident)
     {
-        $resident->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('ktp_photo')) {
+
+            if ($resident->ktp_photo) {
+                Storage::disk('public')->delete($resident->ktp_photo);
+            }
+
+            $data['ktp_photo'] = $request
+                ->file('ktp_photo')
+                ->store('ktp', 'public');
+        }
+
+        $resident->update($data);
 
         return new ResidentResource($resident);
     }

@@ -44,7 +44,9 @@ class UpdateResidentRequest extends FormRequest
 
             'ktp_photo' => [
                 'nullable',
-                'string',
+                'image',
+                'mimes:jpg,jpeg,png',
+                'max:2048',
             ],
 
             'resident_status' => [
