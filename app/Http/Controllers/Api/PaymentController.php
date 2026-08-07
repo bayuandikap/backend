@@ -18,8 +18,8 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $query = Payment::with([
-            'house',
-            'paymentType'
+            'house:id,house_number,block',
+            'paymentType:id,name',
         ]);
 
         $query->when(

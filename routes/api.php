@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ResidentController;
 use App\Http\Controllers\Api\HouseResidentController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentTypeController;
 use App\Http\Controllers\Api\ReportController;
 
 Route::get('/user', function (Request $request) {
@@ -28,6 +29,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('residents', ResidentController::class);
     Route::apiResource('house-residents', HouseResidentController::class);
     Route::apiResource('payments', PaymentController::class);
+    Route::get(
+        '/payment-types',
+        [PaymentTypeController::class, 'index']
+    );
     Route::apiResource('expenses', ExpenseController::class);
 
     Route::get(
