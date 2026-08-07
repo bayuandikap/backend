@@ -36,7 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('expenses', ExpenseController::class);
 
     Route::get(
-        '/reports/monthly-financial',
-        [ReportController::class, 'monthlyFinancial']
+        '/reports',
+        [ReportController::class, 'index']
     );
 });

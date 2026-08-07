@@ -14,8 +14,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $month = Carbon::now()->month;
-        $year = Carbon::now()->year;
+        $month = now()->month;
+        $year = now()->year;
 
         $totalIncome = Payment::where('status', 'paid')
             ->sum('amount');
@@ -30,6 +30,26 @@ class DashboardController extends Controller
         $monthlyExpense = Expense::whereMonth('expense_date', $month)
             ->whereYear('expense_date', $year)
             ->sum('amount');
+
+        $chart = [];
+
+        for ($i = 1; $i <= 12; $i++) {
+
+            $income = Payment::where('status', 'paid')
+                ->where('month', $i)
+                ->where('year', $year)
+                ->sum('amount');
+
+            $expense = Expense::whereMonth('expense_date', $i)
+                ->whereYear('expense_date', $year)
+                ->sum('amount');
+
+            $chart[] = [
+                'month' => Carbon::create()->month($i)->format('M'),
+                'income' => $income,
+                'expense' => $expense,
+            ];
+        }
 
         return response()->json([
 
@@ -55,7 +75,21 @@ class DashboardController extends Controller
                 'income' => $monthlyIncome,
                 'expense' => $monthlyExpense,
                 'balance' => $monthlyIncome - $monthlyExpense,
-            ]
+            ],
+
+            'chart' => $chart,
+
+            'latest_payments' => Payment::with([
+                'house',
+                'paymentType'
+            ])
+                ->latest()
+                ->take(5)
+                ->get(),
+
+            'latest_expenses' => Expense::latest()
+                ->take(5)
+                ->get(),
         ]);
     }
 }
