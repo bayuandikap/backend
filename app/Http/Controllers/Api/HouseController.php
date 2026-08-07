@@ -8,17 +8,31 @@ use App\Http\Requests\StoreHouseRequest;
 use App\Http\Requests\UpdateHouseRequest;
 use App\Http\Resources\HouseResource;
 use App\Models\House;
+use Illuminate\Http\Request;
 
 class HouseController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $houses = House::with('residents')->latest()->paginate(10);
+        $query = House::query();
 
-        return HouseResource::collection($houses);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('house_number', 'like', "%{$request->search}%")
+                    ->orWhere('block', 'like', "%{$request->search}%");
+            });
+        }
+
+        return HouseResource::collection(
+            $query->latest()->paginate(10)
+        );
     }
 
     /**
@@ -31,8 +45,6 @@ class HouseController extends Controller
         );
 
         return new HouseResource($house);
-
-
     }
 
     /**

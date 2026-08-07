@@ -15,6 +15,7 @@ class HouseResource extends JsonResource
     public function toArray($request): array
     {
         return [
+
             'id' => $this->id,
             'house_number' => $this->house_number,
             'block' => $this->block,

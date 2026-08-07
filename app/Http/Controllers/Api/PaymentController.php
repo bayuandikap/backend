@@ -6,21 +6,43 @@ use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
-use App\Http\Resources\HouseResidentResource;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
+use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $payments = Payment::with([
+        $query = Payment::with([
             'house',
             'paymentType'
-        ])
+        ]);
+
+        $query->when(
+            $request->status,
+            fn($q, $status) => $q->where('status', $status)
+        );
+
+        $query->when(
+            $request->month,
+            fn($q, $month) => $q->where('month', $month)
+        );
+
+        $query->when(
+            $request->year,
+            fn($q, $year) => $q->where('year', $year)
+        );
+
+        $query->when(
+            $request->house_id,
+            fn($q, $id) => $q->where('house_id', $id)
+        );
+
+        $payments = $query
             ->latest()
             ->paginate(10);
 
@@ -32,15 +54,10 @@ class PaymentController extends Controller
      */
     public function store(StorePaymentRequest $request)
     {
-        $payment = Payment::create(
-            $request->validated()
-        );
+        $payment = Payment::create($request->validated());
 
         return new PaymentResource(
-            $payment->load([
-                'house',
-                'paymentType'
-            ])
+            $payment->load('house', 'paymentType')
         );
     }
 

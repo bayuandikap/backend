@@ -27,7 +27,7 @@ class UpdateHouseRequest extends FormRequest
             'house_number' => [
                 'required',
                 'max:20',
-                Rule::unique('houses', 'house_number')
+                Rule::unique('houses')
                     ->ignore($this->route('house')),
             ],
 

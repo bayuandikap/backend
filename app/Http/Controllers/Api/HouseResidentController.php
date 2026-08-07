@@ -3,20 +3,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\StoreHouseResidentRequest;
 use App\Http\Requests\UpdateHouseResidentRequest;
 use App\Http\Resources\HouseResidentResource;
 use App\Models\HouseResident;
 
-class HouseController extends Controller
+class HouseResidentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $houseResidents = HouseResident::with('house', 'resident')->latest()->paginate(10);
+        $houseResidents = HouseResident::with([
+            'house',
+            'resident'
+        ])->latest()->paginate(10);
 
         return HouseResidentResource::collection($houseResidents);
     }
@@ -26,20 +28,25 @@ class HouseController extends Controller
      */
     public function store(StoreHouseResidentRequest $request)
     {
-        // Check if the house already has an active resident
-        $activeResident = HouseResident::where('house_id', $request->house_id)
+        $exists = HouseResident::where('resident_id', $request->resident_id)
             ->where('is_active', true)
             ->exists();
 
-        if ($activeResident) {
+        if ($exists) {
+
             return response()->json([
-                'message' => 'House already has an active resident.'
+                'message' => 'Resident already belongs to another house.'
             ], 422);
         }
 
         $houseResident = HouseResident::create(
             $request->validated()
         );
+
+        $houseResident->load([
+            'house',
+            'resident'
+        ]);
 
         return new HouseResidentResource($houseResident);
     }
@@ -49,6 +56,11 @@ class HouseController extends Controller
      */
     public function show(HouseResident $houseResident)
     {
+        $houseResident->load([
+            'house',
+            'resident'
+        ]);
+
         return new HouseResidentResource($houseResident);
     }
 
@@ -67,8 +79,15 @@ class HouseController extends Controller
      */
     public function destroy(HouseResident $houseResident)
     {
-        $houseResident->delete();
+        $houseResident->update([
 
-        return response()->noContent();
+            'is_active' => false,
+
+            'end_date' => today(),
+        ]);
+
+        return response()->json([
+            'message' => 'Resident moved out.'
+        ]);
     }
 }

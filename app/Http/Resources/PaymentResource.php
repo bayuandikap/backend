@@ -16,6 +16,17 @@ class PaymentResource extends JsonResource
     {
         return [
             'id' => $this->id,
+
+            'house' => [
+                'id' => $this->house->id,
+                'house_number' => $this->house->house_number,
+            ],
+
+            'payment_type' => [
+                'id' => $this->paymentType->id,
+                'name' => $this->paymentType->name,
+            ],
+
             'month' => $this->month,
             'year' => $this->year,
             'amount' => $this->amount,
@@ -23,20 +34,7 @@ class PaymentResource extends JsonResource
             'status' => $this->status,
             'notes' => $this->notes,
 
-            'house' => $this->whenLoaded('house', function () {
-                return [
-                    'id' => $this->house->id,
-                    'house_number' => $this->house->house_number,
-                ];
-            }),
-
-            'payment_type' => $this->whenLoaded('paymentType', function () {
-                return [
-                    'id' => $this->paymentType->id,
-                    'name' => $this->paymentType->name,
-                    'default_amount' => $this->paymentType->default_amount,
-                ];
-            }),
+            'created_at' => $this->created_at,
         ];
     }
 }

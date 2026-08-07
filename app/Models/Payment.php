@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
+
+    protected $fillable = [
+        'house_id',
+        'payment_type_id',
+        'month',
+        'year',
+        'amount',
+        'paid_at',
+        'status',
+        'notes',
+    ];
     public function house()
     {
         return $this->belongsTo(House::class);
@@ -14,10 +25,5 @@ class Payment extends Model
     public function paymentType()
     {
         return $this->belongsTo(PaymentType::class);
-    }
-
-    public function houseResident()
-    {
-        return $this->belongsTo(HouseResident::class);
     }
 }

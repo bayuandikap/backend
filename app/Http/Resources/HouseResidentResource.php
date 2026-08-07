@@ -14,32 +14,6 @@ class HouseResidentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-
-            'house_id' => [
-                'required',
-                'exists:houses,id',
-            ],
-
-            'resident_id' => [
-                'required',
-                'exists:residents,id',
-            ],
-
-            'start_date' => [
-                'required',
-                'date',
-            ],
-
-            'end_date' => [
-                'nullable',
-                'date',
-                'after_or_equal:start_date',
-            ],
-
-            'is_active' => [
-                'boolean',
-            ],
-        ];
+        return parent::toArray($request);
     }
 }
