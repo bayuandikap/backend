@@ -49,9 +49,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('payments');
-
-        Schema::table('payments', function (Blueprint $table) {
-            $table->dropUnique('payments_unique_monthly');
-        });
     }
 };

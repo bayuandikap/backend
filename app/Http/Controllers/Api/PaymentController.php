@@ -54,7 +54,17 @@ class PaymentController extends Controller
      */
     public function store(StorePaymentRequest $request)
     {
-        $payment = Payment::create($request->validated());
+        $data = $request->validated();
+
+        if ($data['status'] === 'unpaid') {
+            $data['paid_at'] = null;
+        }
+
+        if ($data['status'] === 'paid' && empty($data['paid_at'])) {
+            $data['paid_at'] = today();
+        }
+
+        $payment = Payment::create($data);
 
         return new PaymentResource(
             $payment->load('house', 'paymentType')
@@ -77,16 +87,26 @@ class PaymentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePaymentRequest $request, Payment $payment)
-    {
-        $payment->update(
-            $request->validated()
-        );
+    public function update(
+        UpdatePaymentRequest $request,
+        Payment $payment
+    ) {
+        $data = $request->validated();
+
+        if ($data['status'] === 'unpaid') {
+            $data['paid_at'] = null;
+        }
+
+        if ($data['status'] === 'paid' && empty($data['paid_at'])) {
+            $data['paid_at'] = today();
+        }
+
+        $payment->update($data);
 
         return new PaymentResource(
             $payment->load([
                 'house',
-                'paymentType'
+                'paymentType',
             ])
         );
     }

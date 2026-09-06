@@ -17,7 +17,11 @@ class ResidentController extends Controller
         $query = Resident::query();
 
         $query->when($request->search, function ($q, $search) {
-            $q->where('name', 'like', "%{$search}%");
+            $q->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('nik', 'like', "%{$search}%");
+            });
         });
 
         $query->when($request->gender, function ($q, $gender) {
@@ -28,7 +32,7 @@ class ResidentController extends Controller
             $q->where('resident_status', $status);
         });
 
-        $residents = Resident::latest()->paginate(10);
+        $residents = $query->latest()->paginate(10);
 
         return ResidentResource::collection($residents);
     }

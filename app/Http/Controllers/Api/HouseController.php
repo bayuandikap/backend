@@ -30,6 +30,12 @@ class HouseController extends Controller
             });
         }
 
+        if ($request->boolean('all')) {
+            return HouseResource::collection(
+                $query->orderBy('house_number')->get()
+            );
+        }
+
         return HouseResource::collection(
             $query->latest()->paginate(10)
         );

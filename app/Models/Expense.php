@@ -12,4 +12,9 @@ class Expense extends Model
         'expense_date',
         'description',
     ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'expense_date' => 'date',
+    ];
 }

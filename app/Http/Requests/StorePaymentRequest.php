@@ -15,51 +15,52 @@ class StorePaymentRequest extends FormRequest
         return true;
     }
 
-public function rules(): array
-{
-    return [
-        'house_id' => [
-            'required',
-            'exists:houses,id',
-        ],
+    public function rules(): array
+    {
+        return [
+            'house_id' => [
+                'required',
+                'exists:houses,id',
+            ],
 
-        'payment_type_id' => [
-            'required',
-            'exists:payment_types,id',
-        ],
+            'payment_type_id' => [
+                'required',
+                'exists:payment_types,id',
+            ],
 
-        'month' => [
-            'required',
-            'integer',
-            'between:1,12',
-        ],
+            'month' => [
+                'required',
+                'integer',
+                'between:1,12',
+            ],
 
-        'year' => [
-            'required',
-            'integer',
-            'digits:4',
-        ],
+            'year' => [
+                'required',
+                'integer',
+                'digits:4',
+            ],
 
-        'amount' => [
-            'required',
-            'numeric',
-            'min:0',
-        ],
+            'amount' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
 
-        'paid_at' => [
-            'nullable',
-            'date',
-        ],
+            'paid_at' => [
+                'nullable',
+                'date',
+                'required_if:status,paid',
+            ],
 
-        'status' => [
-            'required',
-            'in:paid,unpaid',
-        ],
+            'status' => [
+                'required',
+                'in:paid,unpaid',
+            ],
 
-        'notes' => [
-            'nullable',
-            'string',
-        ],
-    ];
-}
+            'notes' => [
+                'nullable',
+                'string',
+            ],
+        ];
+    }
 }

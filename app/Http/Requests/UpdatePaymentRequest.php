@@ -46,6 +46,7 @@ class UpdatePaymentRequest extends FormRequest
             'paid_at' => [
                 'nullable',
                 'date',
+                'required_if:status,paid',
             ],
 
             'status' => [

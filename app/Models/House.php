@@ -6,14 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class House extends Model
 {
-
     protected $fillable = [
         'house_number',
         'block',
         'status',
     ];
 
-    public function residents()
+    public function houseResidents()
     {
         return $this->hasMany(HouseResident::class);
     }
@@ -21,10 +20,5 @@ class House extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
-    }
-
-    public function houseResidents()
-    {
-        return $this->hasMany(HouseResident::class);
     }
 }
