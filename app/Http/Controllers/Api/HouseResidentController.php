@@ -6,17 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreHouseResidentRequest;
 use App\Http\Requests\UpdateHouseResidentRequest;
 use App\Http\Resources\HouseResidentResource;
-use App\Models\House;
 use App\Models\HouseResident;
-use Illuminate\Support\Facades\DB;
 
 class HouseResidentController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
         $houseResidents = HouseResident::with([
             'house',
-            'resident',
+            'resident'
         ])
             ->latest()
             ->paginate(10);
@@ -24,11 +25,15 @@ class HouseResidentController extends Controller
         return HouseResidentResource::collection($houseResidents);
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(StoreHouseResidentRequest $request)
     {
-        $data = $request->validated();
-
-        $exists = HouseResident::where('resident_id', $data['resident_id'])
+        $exists = HouseResident::where(
+            'resident_id',
+            $request->resident_id
+        )
             ->where('is_active', true)
             ->exists();
 
@@ -38,38 +43,34 @@ class HouseResidentController extends Controller
             ], 422);
         }
 
-        $house = House::findOrFail($data['house_id']);
-
-        if ($house->status === 'occupied') {
-            return response()->json([
-                'message' => 'House is already occupied.'
-            ], 422);
-        }
-
-        $houseResident = HouseResident::create($data);
-
-        $house->update([
-            'status' => 'occupied',
-        ]);
+        $houseResident = HouseResident::create(
+            $request->validated()
+        );
 
         $houseResident->load([
             'house',
-            'resident',
+            'resident'
         ]);
 
         return new HouseResidentResource($houseResident);
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(HouseResident $houseResident)
     {
         $houseResident->load([
             'house',
-            'resident',
+            'resident'
         ]);
 
         return new HouseResidentResource($houseResident);
     }
 
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(
         UpdateHouseResidentRequest $request,
         HouseResident $houseResident
@@ -77,40 +78,47 @@ class HouseResidentController extends Controller
         $data = $request->validated();
 
         /*
-         * For now, prevent changing the house/resident
-         * through a normal update.
-         *
-         * Moving a resident should be handled as:
-         * move out → assign to another house.
+         * If changing the resident or house, make sure
+         * the selected resident does not already have
+         * another active house assignment.
          */
-        if (
-            isset($data['house_id']) &&
-            $data['house_id'] != $houseResident->house_id
-        ) {
-            return response()->json([
-                'message' => 'To move a resident, move them out first and then assign them to another house.',
-            ], 422);
-        }
+        $residentChanged =
+            isset($data['resident_id']) &&
+            $data['resident_id'] != $houseResident->resident_id;
 
         if (
-            isset($data['resident_id']) &&
-            $data['resident_id'] != $houseResident->resident_id
+            $residentChanged &&
+            ($data['is_active'] ?? $houseResident->is_active)
         ) {
-            return response()->json([
-                'message' => 'Changing the resident is not allowed. Create a new house assignment instead.',
-            ], 422);
+            $exists = HouseResident::where(
+                'resident_id',
+                $data['resident_id']
+            )
+                ->where('is_active', true)
+                ->where('id', '!=', $houseResident->id)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'message' =>
+                        'Resident already belongs to another house.'
+                ], 422);
+            }
         }
 
         $houseResident->update($data);
 
         $houseResident->load([
             'house',
-            'resident',
+            'resident'
         ]);
 
         return new HouseResidentResource($houseResident);
     }
 
+    /**
+     * Move a resident out of a house.
+     */
     public function destroy(HouseResident $houseResident)
     {
         if (!$houseResident->is_active) {
@@ -119,86 +127,10 @@ class HouseResidentController extends Controller
             ], 422);
         }
 
-        public function update(
-    UpdateHouseResidentRequest $request,
-    HouseResident $houseResident
-) {
-    $data = $request->validated();
-
-    $oldHouseId = $houseResident->house_id;
-    $newHouseId = $data['house_id'];
-
-    /*
-     * If assigning this resident to a different house
-     * while keeping the relationship active,
-     * make sure the target house is available.
-     */
-    if (
-        $data['is_active'] ?? $houseResident->is_active
-    ) {
-        $exists = HouseResident::where('resident_id', $data['resident_id'])
-            ->where('is_active', true)
-            ->where('id', '!=', $houseResident->id)
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'message' => 'Resident already belongs to another house.'
-            ], 422);
-        }
-
-        if ($newHouseId !== $oldHouseId) {
-            $newHouse = House::findOrFail($newHouseId);
-
-            if ($newHouse->status === 'occupied') {
-                return response()->json([
-                    'message' => 'House is already occupied.'
-                ], 422);
-            }
-        }
-    }
-
-    $houseResident->update($data);
-
-    /*
-     * Synchronize old house status.
-     */
-    if ($oldHouseId !== $newHouseId) {
-        $oldHouse = $houseResident->house;
-
-        if ($oldHouse) {
-            $hasActiveResident = HouseResident::where('house_id', $oldHouseId)
-                ->where('is_active', true)
-                ->exists();
-
-            if (!$hasActiveResident) {
-                $oldHouse->update([
-                    'status' => 'vacant',
-                ]);
-            }
-        }
-    }
-
-    /*
-     * Synchronize new house status.
-     */
-    if (
-        ($data['is_active'] ?? $houseResident->is_active)
-    ) {
-        $newHouse = House::findOrFail($newHouseId);
-
-        $newHouse->update([
-            'status' => 'occupied',
+        $houseResident->update([
+            'is_active' => false,
+            'end_date' => today(),
         ]);
-    }
-
-    $houseResident->load([
-        'house',
-        'resident',
-    ]);
-
-    return new HouseResidentResource($houseResident);
-}
 
         return response()->json([
             'message' => 'Resident moved out.'

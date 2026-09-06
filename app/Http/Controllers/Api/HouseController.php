@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\StoreHouseRequest;
 use App\Http\Requests\UpdateHouseRequest;
 use App\Http\Resources\HouseResource;
@@ -12,38 +11,46 @@ use Illuminate\Http\Request;
 
 class HouseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = House::query();
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('house_number', 'like', "%{$request->search}%")
-                    ->orWhere('block', 'like', "%{$request->search}%");
-            });
-        }
-
-        if ($request->boolean('all')) {
-            return HouseResource::collection(
-                $query->orderBy('house_number')->get()
+            $query->where(
+                'status',
+                $request->status
             );
         }
 
+        if ($request->filled('search')) {
+
+            $query->where(function ($q) use ($request) {
+
+                $q->where(
+                    'house_number',
+                    'like',
+                    "%{$request->search}%"
+                )
+                    ->orWhere(
+                        'block',
+                        'like',
+                        "%{$request->search}%"
+                    );
+            });
+        }
+
+        $perPage = min(
+            (int) $request->input('per_page', 10),
+            1000
+        );
+
         return HouseResource::collection(
-            $query->latest()->paginate(10)
+            $query
+                ->latest()
+                ->paginate($perPage)
         );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreHouseRequest $request)
     {
         $house = House::create(
@@ -53,27 +60,22 @@ class HouseController extends Controller
         return new HouseResource($house);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(House $house)
     {
         return new HouseResource($house);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateHouseRequest $request, House $house)
-    {
-        $house->update($request->validated());
+    public function update(
+        UpdateHouseRequest $request,
+        House $house
+    ) {
+        $house->update(
+            $request->validated()
+        );
 
         return new HouseResource($house);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(House $house)
     {
         $house->delete();

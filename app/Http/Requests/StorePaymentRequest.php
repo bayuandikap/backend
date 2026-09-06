@@ -2,14 +2,11 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePaymentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
@@ -49,7 +46,6 @@ class StorePaymentRequest extends FormRequest
             'paid_at' => [
                 'nullable',
                 'date',
-                'required_if:status,paid',
             ],
 
             'status' => [
@@ -62,5 +58,46 @@ class StorePaymentRequest extends FormRequest
                 'string',
             ],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+
+            if (
+                !$this->house_id ||
+                !$this->payment_type_id ||
+                !$this->month ||
+                !$this->year
+            ) {
+                return;
+            }
+
+            $exists = \App\Models\Payment::where(
+                'house_id',
+                $this->house_id
+            )
+                ->where(
+                    'payment_type_id',
+                    $this->payment_type_id
+                )
+                ->where(
+                    'month',
+                    $this->month
+                )
+                ->where(
+                    'year',
+                    $this->year
+                )
+                ->exists();
+
+            if ($exists) {
+
+                $validator->errors()->add(
+                    'payment',
+                    'A payment for this house, payment type, month and year already exists.'
+                );
+            }
+        });
     }
 }

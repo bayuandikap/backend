@@ -13,6 +13,7 @@ class PaymentTypeController extends Controller
             ->get([
                 'id',
                 'name',
+                'default_amount',
             ]);
     }
 }
