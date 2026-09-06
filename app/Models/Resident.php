@@ -17,10 +17,10 @@ class Resident extends Model
         'is_married',
     ];
 
-    public function houses()
-    {
-        return $this->hasMany(HouseResident::class);
-    }
+    protected $casts = [
+        'birth_date' => 'date',
+        'is_married' => 'boolean',
+    ];
 
     public function houseResidents()
     {

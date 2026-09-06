@@ -16,69 +16,133 @@ class ResidentController extends Controller
     {
         $query = Resident::query();
 
-        $query->when($request->search, function ($q, $search) {
-            $q->where('name', 'like', "%{$search}%");
-        });
+        $query->when(
+            $request->search,
+            function ($q, $search) {
 
-        $query->when($request->gender, function ($q, $gender) {
-            $q->where('gender', $gender);
-        });
+                $q->where(function ($query) use ($search) {
 
-        $query->when($request->resident_status, function ($q, $status) {
-            $q->where('resident_status', $status);
-        });
+                    $query
+                        ->where(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        )
+                        ->orWhere(
+                            'nik',
+                            'like',
+                            "%{$search}%"
+                        );
+                });
+            }
+        );
 
-        $residents = Resident::latest()->paginate(10);
+        $query->when(
+            $request->gender,
+            function ($q, $gender) {
 
-        return ResidentResource::collection($residents);
+                $q->where(
+                    'gender',
+                    $gender
+                );
+            }
+        );
+
+        $query->when(
+            $request->resident_status,
+            function ($q, $status) {
+
+                $q->where(
+                    'resident_status',
+                    $status
+                );
+            }
+        );
+
+        $perPage = min(
+            (int) $request->input('per_page', 10),
+            1000
+        );
+
+        $residents = $query
+            ->latest()
+            ->paginate($perPage);
+
+        return ResidentResource::collection(
+            $residents
+        );
     }
 
-    public function store(StoreResidentRequest $request)
-    {
+    public function store(
+        StoreResidentRequest $request
+    ) {
         $data = $request->validated();
 
         if ($request->hasFile('ktp_photo')) {
-            $data['ktp_photo'] = $request
+
+            $data['ktp_photo'] =
+                $request
                 ->file('ktp_photo')
-                ->store('ktp', 'public');
+                ->store(
+                    'ktp',
+                    'public'
+                );
         }
 
         $resident = Resident::create($data);
 
-        return new ResidentResource($resident);
+        return new ResidentResource(
+            $resident
+        );
     }
 
     public function show(Resident $resident)
     {
-        return new ResidentResource($resident);
+        return new ResidentResource(
+            $resident
+        );
     }
 
-    public function update(UpdateResidentRequest $request, Resident $resident)
-    {
+    public function update(
+        UpdateResidentRequest $request,
+        Resident $resident
+    ) {
         $data = $request->validated();
 
         if ($request->hasFile('ktp_photo')) {
 
             if ($resident->ktp_photo) {
-                Storage::disk('public')->delete($resident->ktp_photo);
+
+                Storage::disk('public')
+                    ->delete(
+                        $resident->ktp_photo
+                    );
             }
 
-            $data['ktp_photo'] = $request
+            $data['ktp_photo'] =
+                $request
                 ->file('ktp_photo')
-                ->store('ktp', 'public');
+                ->store(
+                    'ktp',
+                    'public'
+                );
         }
 
         $resident->update($data);
 
-        return new ResidentResource($resident);
+        return new ResidentResource(
+            $resident
+        );
     }
 
-    public function destroy(Resident $resident)
-    {
+    public function destroy(
+        Resident $resident
+    ) {
         $resident->delete();
 
         return response()->json([
-            'message' => 'Resident deleted successfully.'
+            'message' =>
+            'Resident deleted successfully.'
         ]);
     }
 }

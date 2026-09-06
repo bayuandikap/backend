@@ -2,64 +2,102 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePaymentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-public function rules(): array
-{
-    return [
-        'house_id' => [
-            'required',
-            'exists:houses,id',
-        ],
+    public function rules(): array
+    {
+        return [
+            'house_id' => [
+                'required',
+                'exists:houses,id',
+            ],
 
-        'payment_type_id' => [
-            'required',
-            'exists:payment_types,id',
-        ],
+            'payment_type_id' => [
+                'required',
+                'exists:payment_types,id',
+            ],
 
-        'month' => [
-            'required',
-            'integer',
-            'between:1,12',
-        ],
+            'month' => [
+                'required',
+                'integer',
+                'between:1,12',
+            ],
 
-        'year' => [
-            'required',
-            'integer',
-            'digits:4',
-        ],
+            'year' => [
+                'required',
+                'integer',
+                'digits:4',
+            ],
 
-        'amount' => [
-            'required',
-            'numeric',
-            'min:0',
-        ],
+            'amount' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
 
-        'paid_at' => [
-            'nullable',
-            'date',
-        ],
+            'paid_at' => [
+                'nullable',
+                'date',
+            ],
 
-        'status' => [
-            'required',
-            'in:paid,unpaid',
-        ],
+            'status' => [
+                'required',
+                'in:paid,unpaid',
+            ],
 
-        'notes' => [
-            'nullable',
-            'string',
-        ],
-    ];
-}
+            'notes' => [
+                'nullable',
+                'string',
+            ],
+        ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+
+            if (
+                !$this->house_id ||
+                !$this->payment_type_id ||
+                !$this->month ||
+                !$this->year
+            ) {
+                return;
+            }
+
+            $exists = \App\Models\Payment::where(
+                'house_id',
+                $this->house_id
+            )
+                ->where(
+                    'payment_type_id',
+                    $this->payment_type_id
+                )
+                ->where(
+                    'month',
+                    $this->month
+                )
+                ->where(
+                    'year',
+                    $this->year
+                )
+                ->exists();
+
+            if ($exists) {
+
+                $validator->errors()->add(
+                    'payment',
+                    'A payment for this house, payment type, month and year already exists.'
+                );
+            }
+        });
+    }
 }

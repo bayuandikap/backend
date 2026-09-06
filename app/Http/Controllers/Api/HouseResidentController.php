@@ -18,7 +18,9 @@ class HouseResidentController extends Controller
         $houseResidents = HouseResident::with([
             'house',
             'resident'
-        ])->latest()->paginate(10);
+        ])
+            ->latest()
+            ->paginate(10);
 
         return HouseResidentResource::collection($houseResidents);
     }
@@ -28,12 +30,14 @@ class HouseResidentController extends Controller
      */
     public function store(StoreHouseResidentRequest $request)
     {
-        $exists = HouseResident::where('resident_id', $request->resident_id)
+        $exists = HouseResident::where(
+            'resident_id',
+            $request->resident_id
+        )
             ->where('is_active', true)
             ->exists();
 
         if ($exists) {
-
             return response()->json([
                 'message' => 'Resident already belongs to another house.'
             ], 422);
@@ -67,22 +71,64 @@ class HouseResidentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateHouseResidentRequest $request, HouseResident $houseResident)
-    {
-        $houseResident->update($request->validated());
+    public function update(
+        UpdateHouseResidentRequest $request,
+        HouseResident $houseResident
+    ) {
+        $data = $request->validated();
+
+        /*
+         * If changing the resident or house, make sure
+         * the selected resident does not already have
+         * another active house assignment.
+         */
+        $residentChanged =
+            isset($data['resident_id']) &&
+            $data['resident_id'] != $houseResident->resident_id;
+
+        if (
+            $residentChanged &&
+            ($data['is_active'] ?? $houseResident->is_active)
+        ) {
+            $exists = HouseResident::where(
+                'resident_id',
+                $data['resident_id']
+            )
+                ->where('is_active', true)
+                ->where('id', '!=', $houseResident->id)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'message' =>
+                        'Resident already belongs to another house.'
+                ], 422);
+            }
+        }
+
+        $houseResident->update($data);
+
+        $houseResident->load([
+            'house',
+            'resident'
+        ]);
 
         return new HouseResidentResource($houseResident);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Move a resident out of a house.
      */
     public function destroy(HouseResident $houseResident)
     {
+        if (!$houseResident->is_active) {
+            return response()->json([
+                'message' => 'Resident is already inactive.'
+            ], 422);
+        }
+
         $houseResident->update([
-
             'is_active' => false,
-
             'end_date' => today(),
         ]);
 

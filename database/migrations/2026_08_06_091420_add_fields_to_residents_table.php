@@ -6,13 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('residents', function (Blueprint $table) {
-
             $table->string('ktp_photo')->nullable();
 
             $table->enum('resident_status', [
@@ -25,13 +21,14 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('residents', function (Blueprint $table) {
-            //
+            $table->dropColumn([
+                'ktp_photo',
+                'resident_status',
+                'is_married',
+            ]);
         });
     }
 };

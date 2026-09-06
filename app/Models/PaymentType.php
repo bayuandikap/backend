@@ -11,6 +11,10 @@ class PaymentType extends Model
         'default_amount',
     ];
 
+    protected $casts = [
+        'default_amount' => 'decimal:2',
+    ];
+
     public function payments()
     {
         return $this->hasMany(Payment::class);
