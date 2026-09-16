@@ -108,7 +108,34 @@ class ResidentController extends Controller
         Resident $resident
     ) {
         $data = $request->validated();
+        $removeKtpPhoto = in_array(
+            strtolower((string) $request->input('remove_ktp_photo')),
+            ['1', 'true', 'on', 'yes'],
+            true
+        );
 
+        /*
+         * REMOVE EXISTING KTP PHOTO
+         */
+        if (
+            $removeKtpPhoto
+            && $resident->ktp_photo
+        ) {
+
+            Storage::disk('public')
+                ->delete(
+                    $resident->ktp_photo
+                );
+
+            $data['ktp_photo'] = null;
+        }
+
+        /*
+         * UPLOAD / REPLACE KTP PHOTO
+         *
+         * A new photo takes priority over
+         * remove_ktp_photo.
+         */
         if ($request->hasFile('ktp_photo')) {
 
             if ($resident->ktp_photo) {
@@ -128,16 +155,34 @@ class ResidentController extends Controller
                 );
         }
 
+        /*
+         * Do not accidentally save the
+         * control field into the database.
+         */
+        unset($data['remove_ktp_photo']);
+
         $resident->update($data);
 
         return new ResidentResource(
-            $resident
+            $resident->fresh()
         );
     }
 
     public function destroy(
         Resident $resident
     ) {
+        /*
+         * Delete the stored KTP photo
+         * before deleting the resident.
+         */
+        if ($resident->ktp_photo) {
+
+            Storage::disk('public')
+                ->delete(
+                    $resident->ktp_photo
+                );
+        }
+
         $resident->delete();
 
         return response()->json([

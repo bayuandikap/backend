@@ -23,7 +23,8 @@ class ResidentResource extends JsonResource
             'email' => $this->email,
             'birth_date' => $this->birth_date,
             'ktp_photo' => $this->ktp_photo
-                ? asset(Storage::url($this->ktp_photo))
+                ? $request->getSchemeAndHttpHost()
+                    . Storage::url($this->ktp_photo)
                 : null,
             'resident_status' => $this->resident_status,
             'is_married' => $this->is_married,
