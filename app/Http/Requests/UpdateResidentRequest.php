@@ -23,23 +23,38 @@ class UpdateResidentRequest extends FormRequest
 
             'name' => [
                 'required',
-                'max:255'
+                'max:255',
             ],
 
             'phone' => [
                 'nullable',
-                'max:20'
+                'max:20',
             ],
 
             'email' => [
                 'nullable',
                 'email',
-                'max:255'
+                'max:255',
             ],
 
             'birth_date' => [
                 'nullable',
-                'date'
+                'date',
+            ],
+
+            'gender' => [
+                'required',
+                'in:male,female',
+            ],
+
+            'address' => [
+                'nullable',
+                'max:255',
+            ],
+
+            'occupation' => [
+                'nullable',
+                'max:255',
             ],
 
             'ktp_photo' => [
@@ -47,6 +62,11 @@ class UpdateResidentRequest extends FormRequest
                 'image',
                 'mimes:jpg,jpeg,png',
                 'max:2048',
+            ],
+
+            'remove_ktp_photo' => [
+                'nullable',
+                'boolean',
             ],
 
             'resident_status' => [
