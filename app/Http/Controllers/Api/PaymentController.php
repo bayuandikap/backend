@@ -49,6 +49,17 @@ class PaymentController extends Controller
             $q->where('house_id', $id)
         );
 
+        // Search by house number
+        $query->when(
+            $request->search,
+            function ($q, $search) {
+                $q->whereHas('house', function ($hq) use ($search) {
+                    $hq->where('house_number', 'like', "%{$search}%")
+                        ->orWhere('block', 'like', "%{$search}%");
+                });
+            }
+        );
+
         /*
          * Clone the filtered query before pagination.
          *

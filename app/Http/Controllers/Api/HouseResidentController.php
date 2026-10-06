@@ -7,20 +7,38 @@ use App\Http\Requests\StoreHouseResidentRequest;
 use App\Http\Requests\UpdateHouseResidentRequest;
 use App\Http\Resources\HouseResidentResource;
 use App\Models\HouseResident;
+use Illuminate\Http\Request;
 
 class HouseResidentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $houseResidents = HouseResident::with([
-            'house',
-            'resident'
-        ])
-            ->latest()
-            ->paginate(10);
+        $query = HouseResident::with(['house', 'resident']);
+
+        // Filter by active status (1 = active, 0 = inactive)
+        if ($request->filled('is_active')) {
+            $query->where('is_active', (bool) $request->is_active);
+        }
+
+        // Search by house number or resident name
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('house', function ($hq) use ($search) {
+                    $hq->where('house_number', 'like', "%{$search}%")
+                        ->orWhere('block', 'like', "%{$search}%");
+                })->orWhereHas('resident', function ($rq) use ($search) {
+                    $rq->where('name', 'like', "%{$search}%")
+                        ->orWhere('nik', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        $houseResidents = $query->latest()->paginate(10);
 
         return HouseResidentResource::collection($houseResidents);
     }
