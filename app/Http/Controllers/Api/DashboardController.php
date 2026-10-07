@@ -15,10 +15,9 @@ class DashboardController extends Controller
     public function index()
     {
         $month = now()->month;
-        $year = now()->year;
+        $year  = now()->year;
 
-        $totalIncome = Payment::where('status', 'paid')
-            ->sum('amount');
+        $totalIncome = Payment::where('status', 'paid')->sum('amount');
 
         $monthlyIncome = Payment::where('status', 'paid')
             ->where('month', $month)
@@ -31,22 +30,34 @@ class DashboardController extends Controller
             ->whereYear('expense_date', $year)
             ->sum('amount');
 
+        /*
+         * Chart data — two grouped queries instead of 24 individual ones.
+         *
+         * Income: group paid payments by month for the current year.
+         * Expense: group expenses by month for the current year.
+         */
+        $incomeByMonth = Payment::where('status', 'paid')
+            ->where('year', $year)
+            ->selectRaw('month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        $expenseByMonth = Expense::whereYear('expense_date', $year)
+            ->selectRaw('MONTH(expense_date) as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
         $chart = [];
 
         for ($i = 1; $i <= 12; $i++) {
-
-            $income = Payment::where('status', 'paid')
-                ->where('month', $i)
-                ->where('year', $year)
-                ->sum('amount');
-
-            $expense = Expense::whereMonth('expense_date', $i)
-                ->whereYear('expense_date', $year)
-                ->sum('amount');
+            $income  = (float) ($incomeByMonth[$i]  ?? 0);
+            $expense = (float) ($expenseByMonth[$i] ?? 0);
 
             $chart[] = [
-                'month' => Carbon::create()->month($i)->format('M'),
-                'income' => $income,
+                'month'   => Carbon::create()->month($i)->format('M'),
+                'income'  => $income,
                 'expense' => $expense,
             ];
         }
@@ -54,35 +65,32 @@ class DashboardController extends Controller
         return response()->json([
 
             'houses' => [
-                'total' => House::count(),
+                'total'    => House::count(),
                 'occupied' => House::where('status', 'occupied')->count(),
-                'vacant' => House::where('status', 'vacant')->count(),
+                'vacant'   => House::where('status', 'vacant')->count(),
             ],
 
             'residents' => [
-                'total' => Resident::count(),
+                'total'  => Resident::count(),
                 'active' => HouseResident::where('is_active', true)->count(),
             ],
 
             'finance' => [
-                'total_income' => $totalIncome,
+                'total_income'  => $totalIncome,
                 'total_expense' => $totalExpense,
-                'balance' => $totalIncome - $totalExpense,
-                'unpaid_bills' => Payment::where('status', 'unpaid')->count(),
+                'balance'       => $totalIncome - $totalExpense,
+                'unpaid_bills'  => Payment::where('status', 'unpaid')->count(),
             ],
 
             'current_month' => [
-                'income' => $monthlyIncome,
+                'income'  => $monthlyIncome,
                 'expense' => $monthlyExpense,
                 'balance' => $monthlyIncome - $monthlyExpense,
             ],
 
             'chart' => $chart,
 
-            'latest_payments' => Payment::with([
-                'house',
-                'paymentType'
-            ])
+            'latest_payments' => Payment::with(['house', 'paymentType'])
                 ->latest()
                 ->take(5)
                 ->get(),

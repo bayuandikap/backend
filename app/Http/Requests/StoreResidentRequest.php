@@ -50,6 +50,21 @@ class StoreResidentRequest extends FormRequest
                 'date'
             ],
 
+            'gender' => [
+                'required',
+                'in:male,female',
+            ],
+
+            'address' => [
+                'nullable',
+                'max:500',
+            ],
+
+            'occupation' => [
+                'nullable',
+                'max:255',
+            ],
+
             'ktp_photo' => [
                 'nullable',
                 'image',

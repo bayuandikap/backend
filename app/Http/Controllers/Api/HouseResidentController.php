@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreHouseResidentRequest;
 use App\Http\Requests\UpdateHouseResidentRequest;
 use App\Http\Resources\HouseResidentResource;
+use App\Models\House;
 use App\Models\HouseResident;
 use Illuminate\Http\Request;
 
@@ -64,6 +65,12 @@ class HouseResidentController extends Controller
         $houseResident = HouseResident::create(
             $request->validated()
         );
+
+        // Mark the house as occupied when an active resident is assigned.
+        if ($houseResident->is_active) {
+            House::where('id', $houseResident->house_id)
+                ->update(['status' => 'occupied']);
+        }
 
         $houseResident->load([
             'house',
@@ -124,7 +131,22 @@ class HouseResidentController extends Controller
             }
         }
 
+        $previousHouseId  = $houseResident->house_id;
+        $previousIsActive = $houseResident->is_active;
+
         $houseResident->update($data);
+
+        $newHouseId  = $houseResident->house_id;
+        $newIsActive = $houseResident->is_active;
+
+        // Sync house status after any update that could affect occupancy.
+        $affectedHouseIds = array_unique(
+            array_filter([$previousHouseId, $newHouseId])
+        );
+
+        foreach ($affectedHouseIds as $houseId) {
+            $this->syncHouseStatus($houseId);
+        }
 
         $houseResident->load([
             'house',
@@ -145,13 +167,33 @@ class HouseResidentController extends Controller
             ], 422);
         }
 
+        $houseId = $houseResident->house_id;
+
         $houseResident->update([
             'is_active' => false,
             'end_date' => today(),
         ]);
 
+        // Re-evaluate house status now that this resident has moved out.
+        $this->syncHouseStatus($houseId);
+
         return response()->json([
             'message' => 'Resident moved out.'
+        ]);
+    }
+
+    /**
+     * Set a house to 'occupied' if it has any active residents,
+     * or 'vacant' if it has none.
+     */
+    private function syncHouseStatus(int $houseId): void
+    {
+        $hasActiveResident = HouseResident::where('house_id', $houseId)
+            ->where('is_active', true)
+            ->exists();
+
+        House::where('id', $houseId)->update([
+            'status' => $hasActiveResident ? 'occupied' : 'vacant',
         ]);
     }
 }
