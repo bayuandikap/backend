@@ -22,6 +22,9 @@ class ResidentResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
             'birth_date' => $this->birth_date,
+            'gender' => $this->gender,
+            'address' => $this->address,
+            'occupation' => $this->occupation,
             'ktp_photo' => $this->ktp_photo
                 ? $request->getSchemeAndHttpHost()
                     . Storage::url($this->ktp_photo)
